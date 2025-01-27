@@ -2,6 +2,8 @@ import os
 import shutil
 import zipfile
 import json
+import glob
+import sys
 
 def merge_json_arrays(src_file1, src_file2, dest_file):
     with open(src_file1, 'r') as file1:
@@ -45,7 +47,7 @@ def merge_directories(src_dir1, src_dir2, dest_dir):
             if not os.path.exists(dest_file):
                 shutil.copy2(src_file2, dest_file)
 
-def main(zip1, zip2, output_zip):
+def main(zip_pattern, output_zip):
     # Temporary directories for extracted contents
     temp_dir1 = "temp_dir1"
     temp_dir2 = "temp_dir2"
@@ -56,11 +58,19 @@ def main(zip1, zip2, output_zip):
     os.makedirs(output_dir, exist_ok=True)
 
     try:
+        # Find matching zip files
+        zip_files = glob.glob(zip_pattern)
+
         # Extract zip files
-        with zipfile.ZipFile(zip1, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir1)
-        with zipfile.ZipFile(zip2, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir2)
+        for zip_file in zip_files:
+            try:
+                with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                    print(f"Extracting {zip_file}")
+                    zip_ref.extractall(temp_dir1)
+                    temp_dir1_files = os.listdir("temp_dir1")
+                    print(temp_dir1_files)
+            except zipfile.BadZipFile:
+                continue
 
         # Merge directories
         merge_directories(temp_dir1, temp_dir2, output_dir)
@@ -74,11 +84,15 @@ def main(zip1, zip2, output_zip):
         shutil.rmtree(output_dir)
 
 if __name__ == "__main__":
-    # Example usage
-    zip1 = "mabc-apa0-face0.zip"  # Replace with your first ZIP file
-    zip2 = "mabc-apa1-face1.zip"  # Replace with your second ZIP file
+    # FILEPATH: /home/yuhw/wc/dunefd/img/merge-zip.py
+    if len(sys.argv) < 2:
+        print("Usage: python merge-zip.py <zip_pattern>")
+        sys.exit(1)
+
+    zip_pattern = sys.argv[1]
+    print(zip_pattern)
     output_zip = "mabc"  # Replace with desired output directory
 
     shutil.rmtree(output_zip, ignore_errors=True)
-    main(zip1, zip2, output_zip)
+    main(zip_pattern, output_zip)
     print(f"Files merged successfully into {output_zip}")
