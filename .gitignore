@@ -1,0 +1,8 @@
+*.gz
+*.bz2
+*.root
+massif.out.*
+*.zip
+*.log
+*.json
+log
